@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Facebook, Twitter, Instagram } from 'react-bootstrap-icons';
 
-const LoginPage = () => {
+const SignUpPage = () => {
   const navigate = useNavigate(); // useNavigate hook for navigation
 
   return (
@@ -12,19 +12,19 @@ const LoginPage = () => {
         <h1 className="mb-4 fw-bold" style={{ fontSize: '24px' }}>DUE-MEMO</h1>
 
         <div className="mb-4">
-          <button className="btn btn-outline-dark btn-lg w-100 mb-2" onClick={() => navigate('/login/customer')}>
-            Sign in as a Customer
+          <button className="btn btn-outline-dark btn-lg w-100 mb-2" onClick={() => navigate('/signup/customer')}>
+            Sign-up as a Customer
           </button>
-          <button className="btn btn-outline-dark btn-lg w-100" onClick={() => navigate('/login/vendor')}>
-            Sign in as a Vendor
+          <button className="btn btn-outline-dark btn-lg w-100" onClick={() => navigate('/signup/vendor')}>
+            Sign-up as a Vendor
           </button>
         </div>
 
         <p className="text-muted mt-3">
-          If not a user, <span style={{ color: "#343a40", cursor: "pointer", fontWeight: "bold" }} onClick={() => navigate("/signup")}>Sign-up!</span>
+          If already a user, <span style={{ color: "#343a40", cursor: "pointer", fontWeight: "bold" }} onClick={() => navigate("/login")}>Login!</span>
         </p>
-        <button className="btn btn-dark btn-lg w-100 mb-4" onClick={() => navigate('/signup')}>
-          Sign In
+        <button className="btn btn-dark btn-lg w-100 mb-4" onClick={() => navigate('/login')}>
+          Sign Up
         </button>
 
         <div className="d-flex justify-content-center gap-3">
@@ -47,4 +47,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default SignUpPage;
