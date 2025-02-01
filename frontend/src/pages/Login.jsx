@@ -12,6 +12,7 @@ const Login = ({ userType }) => {
   const handleLogin = (e) => {
     e.preventDefault();
     // Add authentication logic here
+    navigate(`/${userType}`);
   };
 
   return (
