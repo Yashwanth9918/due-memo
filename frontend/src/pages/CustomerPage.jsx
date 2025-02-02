@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { Container, Row, Col, Button, Input, Card, CardBody } from "reactstrap";
+import {
+  Container, Row, Col, Button, Input, Card, CardBody, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label,
+} from "reactstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const CustomerPage = () => {
@@ -7,6 +9,8 @@ const CustomerPage = () => {
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [debtPaid, setDebtPaid] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [vendorDetails, setVendorDetails] = useState({ name: "", phone: "", email: "" });
 
   const handleViewChange = (newView) => {
     setView(newView);
@@ -15,6 +19,19 @@ const CustomerPage = () => {
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
+  };
+
+  const toggleModal = () => setModalOpen(!modalOpen);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setVendorDetails({ ...vendorDetails, [name]: value });
+  };
+
+  const handleAddVendor = () => {
+    console.log("New Vendor Details:", vendorDetails);
+    toggleModal();
+    setVendorDetails({ name: "", phone: "", email: "" });
   };
 
   return (
@@ -62,7 +79,7 @@ const CustomerPage = () => {
                 </CardBody>
               </Card>
 
-              <Button color="success" className="w-100">Add Vendor +</Button>
+              <Button color="success" className="w-100" onClick={toggleModal}>Add Vendor +</Button>
             </Col>
 
             {/* Right Section */}
@@ -94,6 +111,56 @@ const CustomerPage = () => {
             </Col>
           </Row>
         </Container>
+
+        {/* Add Vendor Modal */}
+        <Modal isOpen={modalOpen} toggle={toggleModal}>
+          <ModalHeader toggle={toggleModal}>Add New Vendor</ModalHeader>
+          <ModalBody>
+            <Form>
+              <FormGroup>
+                <Label for="name">Name</Label>
+                <Input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={vendorDetails.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter vendor's name"
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label for="phone">Phone</Label>
+                <Input
+                  type="text"
+                  id="phone"
+                  name="phone"
+                  value={vendorDetails.phone}
+                  onChange={handleInputChange}
+                  placeholder="Enter vendor's phone"
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label for="email">Email</Label>
+                <Input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={vendorDetails.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter vendor's email"
+                />
+              </FormGroup>
+            </Form>
+          </ModalBody>
+          <ModalFooter>
+            <Button color="success" onClick={handleAddVendor}>
+              Add Vendor
+            </Button>
+            <Button color="secondary" onClick={toggleModal}>
+              Cancel
+            </Button>
+          </ModalFooter>
+        </Modal>
       </div>
     </div>
   );

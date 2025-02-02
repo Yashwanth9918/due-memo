@@ -1,11 +1,15 @@
 import React, { useState } from "react";
-import { Container, Row, Col, Button, Input, Card, CardBody } from "reactstrap";
+import {
+  Container, Row, Col, Button, Input, Card, CardBody, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label,
+} from "reactstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const VendorPage = () => {
   const [view, setView] = useState("customers");
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [customerDetails, setCustomerDetails] = useState({ name: "", phone: "", email: "" });
 
   const handleViewChange = (newView) => {
     setView(newView);
@@ -14,6 +18,19 @@ const VendorPage = () => {
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
+  };
+
+  const toggleModal = () => setModalOpen(!modalOpen);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setCustomerDetails({ ...customerDetails, [name]: value });
+  };
+
+  const handleAddCustomer = () => {
+    console.log("New Customer Details:", customerDetails);
+    toggleModal();
+    setCustomerDetails({ name: "", phone: "", email: "" });
   };
 
   return (
@@ -26,11 +43,15 @@ const VendorPage = () => {
               <h2 className="fw-bold">DUE-MEMO</h2>
               <div className="user-profile mt-4">
                 <p><strong>USER PROFILE</strong></p>
-                <p>Name: John Doe</p>
+                <p>Name: Sunadh P</p>
                 <p>Phone: 123-456-7890</p>
               </div>
-              <Button color="light" className="my-2 w-100" onClick={() => handleViewChange("customers")}>Customers</Button>
-              <Button color="light" className="my-2 w-100" onClick={() => handleViewChange("transactions")}>Transactions</Button>
+              <Button color="light" className="my-2 w-100" onClick={() => handleViewChange("customers")}>
+                Customers
+              </Button>
+              <Button color="light" className="my-2 w-100" onClick={() => handleViewChange("transactions")}>
+                Transactions
+              </Button>
               <div className="mt-5 text-muted">abc123@gmail.com</div>
             </Col>
 
@@ -57,7 +78,7 @@ const VendorPage = () => {
                 </CardBody>
               </Card>
 
-              <Button color="success" className="w-100">Add Customer +</Button>
+              <Button color="success" className="w-100" onClick={toggleModal}>Add Customer +</Button>
             </Col>
 
             {/* Right Section */}
@@ -80,6 +101,56 @@ const VendorPage = () => {
             </Col>
           </Row>
         </Container>
+
+        {/* Add Customer Modal */}
+        <Modal isOpen={modalOpen} toggle={toggleModal}>
+          <ModalHeader toggle={toggleModal}>Add New Customer</ModalHeader>
+          <ModalBody>
+            <Form>
+              <FormGroup>
+                <Label for="name">Name</Label>
+                <Input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={customerDetails.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter customer's name"
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label for="phone">Phone</Label>
+                <Input
+                  type="text"
+                  id="phone"
+                  name="phone"
+                  value={customerDetails.phone}
+                  onChange={handleInputChange}
+                  placeholder="Enter customer's phone"
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label for="email">Email</Label>
+                <Input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={customerDetails.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter customer's email"
+                />
+              </FormGroup>
+            </Form>
+          </ModalBody>
+          <ModalFooter>
+            <Button color="success" onClick={handleAddCustomer}>
+              Add Customer
+            </Button>
+            <Button color="secondary" onClick={toggleModal}>
+              Cancel
+            </Button>
+          </ModalFooter>
+        </Modal>
       </div>
     </div>
   );
