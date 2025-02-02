@@ -57,7 +57,7 @@ const VendorPage = () => {
                 </CardBody>
               </Card>
 
-              <Button color="primary" className="w-100">Add Customer +</Button>
+              <Button color="success" className="w-100">Add Customer +</Button>
             </Col>
 
             {/* Right Section */}
