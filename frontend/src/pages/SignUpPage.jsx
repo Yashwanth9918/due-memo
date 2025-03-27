@@ -24,7 +24,7 @@ const SignUpPage = () => {
           If already a user, <span style={{ color: "#343a40", cursor: "pointer", fontWeight: "bold" }} onClick={() => navigate("/login")}>Login!</span>
         </p>
         <button className="btn btn-dark btn-lg w-100 mb-4" onClick={() => navigate('/login')}>
-          Sign Up
+          Login
         </button>
 
         <div className="d-flex justify-content-center gap-3">

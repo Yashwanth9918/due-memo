@@ -8,11 +8,30 @@ const Login = ({ userType }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const [error, setError] = useState(""); 
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Add authentication logic here
-    navigate(`/${userType}`);
+    setError("");
+
+    try {
+      const response = await fetch("http://localhost:4000/api/v1/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        alert("Login successful!");
+        navigate(`/${userType}`);
+      } else {
+        setError(data.message || "Invalid credentials");
+      }
+    } catch (error) {
+      setError("Server error. Please try again later.");
+    }
   };
 
   return (
@@ -53,15 +72,15 @@ const Login = ({ userType }) => {
         </p>
 
         <div className="d-flex justify-content-center gap-3 mt-4">
-          <button className="btn btn-light border rounded-circle p-2" style={{ width: "40px", height: "40px" }}>
+          <Button className="btn btn-light border rounded-circle p-2" style={{ width: "40px", height: "40px" }}>
             <Facebook size={20} />
-          </button>
-          <button className="btn btn-light border rounded-circle p-2" style={{ width: "40px", height: "40px" }}>
+          </Button>
+          <Button className="btn btn-light border rounded-circle p-2" style={{ width: "40px", height: "40px" }}>
             <Twitter size={20} />
-          </button>
-          <button className="btn btn-light border rounded-circle p-2" style={{ width: "40px", height: "40px" }}>
+          </Button>
+          <Button className="btn btn-light border rounded-circle p-2" style={{ width: "40px", height: "40px" }}>
             <Instagram size={20} />
-          </button>
+          </Button>
         </div>
 
         <footer className="mt-4 text-muted" style={{ fontSize: "14px" }}>

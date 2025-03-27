@@ -24,7 +24,7 @@ const LoginPage = () => {
           If not a user, <span style={{ color: "#343a40", cursor: "pointer", fontWeight: "bold" }} onClick={() => navigate("/signup")}>Sign-up!</span>
         </p>
         <button className="btn btn-dark btn-lg w-100 mb-4" onClick={() => navigate('/signup')}>
-          Sign In
+          Sign Up
         </button>
 
         <div className="d-flex justify-content-center gap-3">
