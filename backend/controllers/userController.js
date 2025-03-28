@@ -42,22 +42,26 @@ export const registerUser = async (req, res) => {
 // };
 
 export const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, role } = req.body;
 
   try {
-    //validation
-    if (!email || !password) {
-      return res.status(400).json({ msg: "Email and password are required" });
+    // Validation
+    if (!email || !password || !role) {
+      return res.status(400).json({ msg: "Email, password, and role are required" });
     }
-    
-    const user = await User.findOne({ email });
+
+    // Find user by email and role
+    const user = await User.findOne({ email, role });
     if (!user) return res.status(400).json({ msg: "Invalid credentials" });
 
+    // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
 
+    // Generate JWT Token
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
+    // Set HttpOnly Cookie
     res.cookie("token", token, { httpOnly: true });
     res.json({ msg: "Login successful", token });
   } catch (err) {

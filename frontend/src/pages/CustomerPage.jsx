@@ -34,6 +34,11 @@ const CustomerPage = () => {
     setVendorDetails({ name: "", phone: "", email: "" });
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // Clear authentication token
+    window.location.href = "/login"; // Redirect to login page
+  };
+
   return (
     <div className="d-flex align-items-center justify-content-center vh-100" style={{ backgroundColor: "#f3f4f6" }}>
       <div className="card p-4 shadow-lg" style={{ width: "90%", borderRadius: "20px" }}>
@@ -53,7 +58,10 @@ const CustomerPage = () => {
               <Button color="light" className="my-2 w-100" onClick={() => handleViewChange("transactions")}>
                 Transactions
               </Button>
-              <div className="mt-5 text-muted">customer123@gmail.com</div>
+              <Button color="danger" className="w-100 mt-4 mb-3" onClick={handleLogout}>
+                Logout
+              </Button>
+              <div className="mt-5">customer123@gmail.com</div>
             </Col>
 
             {/* Middle Section */}

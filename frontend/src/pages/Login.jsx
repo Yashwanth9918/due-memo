@@ -18,7 +18,8 @@ const Login = ({ userType }) => {
       const response = await fetch("http://localhost:4000/api/v1/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        credentials: "include",
+        body: JSON.stringify({ email, password, role:userType }),
       });
 
       const data = await response.json();
@@ -27,10 +28,14 @@ const Login = ({ userType }) => {
         alert("Login successful!");
         navigate(`/${userType}`);
       } else {
-        setError(data.message || "Invalid credentials");
+        alert("Wrong credentials! Please try again.");  // Show alert for incorrect credentials
+        setEmail(""); // Clear email field
+        setPassword(""); // Clear password field
       }
     } catch (error) {
-      setError("Server error. Please try again later.");
+      alert("Server error. Please try again later.");
+      setEmail(""); 
+      setPassword(""); 
     }
   };
 
