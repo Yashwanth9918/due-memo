@@ -1,5 +1,6 @@
 import express from "express";
 import { getClients, addClient } from "../controllers/clientController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -7,7 +8,7 @@ const router = express.Router();
 router.get("/", getClients);
 
 // Add a new client
-router.post("/", addClient);
+router.post("/add",authMiddleware , addClient);
 
 // // Update client details
 // router.put("/:id", updateClient);

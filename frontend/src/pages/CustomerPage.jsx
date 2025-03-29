@@ -28,11 +28,46 @@ const CustomerPage = () => {
     setVendorDetails({ ...vendorDetails, [name]: value });
   };
 
-  const handleAddVendor = () => {
-    console.log("New Vendor Details:", vendorDetails);
-    toggleModal();
-    setVendorDetails({ name: "", phone: "", email: "" });
+  const handleAddVendor = async () => {
+    if (!vendorDetails.name || !vendorDetails.phone || !vendorDetails.email) {
+      alert("Please fill in all fields!");
+      return;
+    }
+  
+    try {
+      const token = localStorage.getItem("token"); // Retrieve authentication token
+      if (!token) {
+        alert("User not authenticated. Please log in again.");
+        return;
+      }
+  
+      const response = await fetch("http://localhost:4000/api/v1/clients/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Attach the token
+        },
+        body: JSON.stringify({
+          name: vendorDetails.name,
+          phoneNumber: vendorDetails.phone,
+          email: vendorDetails.email,
+        }),
+      });
+  
+      const data = await response.json();
+      if (response.ok) {
+        alert("New Vendor added successfully!");
+        setVendorDetails({ name: "", phone: "", email: "" });
+        toggleModal();
+      } else {
+        alert(data.message || "Error adding vendor.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Failed to add vendor. Try again.");
+    }
   };
+  
 
   const handleLogout = () => {
     localStorage.removeItem("token"); // Clear authentication token

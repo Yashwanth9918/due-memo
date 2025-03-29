@@ -27,11 +27,47 @@ const VendorPage = () => {
     setCustomerDetails({ ...customerDetails, [name]: value });
   };
 
-  const handleAddCustomer = () => {
-    console.log("New Customer Details:", customerDetails);
-    toggleModal();
-    setCustomerDetails({ name: "", phone: "", email: "" });
+  const handleAddCustomer = async () => {
+    if (!customerDetails.name || !customerDetails.phone || !customerDetails.email) {
+      alert("Please fill in all fields!");
+      return;
+    }
+  
+    try {
+      const token = localStorage.getItem("token"); // Retrieve the auth token
+      if (!token) {
+        alert("User not authenticated. Please log in again.");
+        return;
+      }
+  
+      const response = await fetch("http://localhost:4000/api/v1/clients/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Attach the token
+        },
+        body: JSON.stringify({
+          name: customerDetails.name,
+          phoneNumber: customerDetails.phone, 
+          email: customerDetails.email,
+        }),
+      });
+  
+      const data = await response.json();
+      if (response.ok) {
+        alert("New Customer added successfully!");
+        setCustomerDetails({ name: "", phone: "", email: "" });
+        toggleModal();
+        // i should add a feature which refreshes when customer is added so that new customer relfects in page
+      } else {
+        alert(data.message || "Error adding customer.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Failed to add customer. Try again.");
+    }
   };
+  
 
   const handleLogout = () => {
     localStorage.removeItem("token"); 
