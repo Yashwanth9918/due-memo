@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { fetchUserData, handleAddCustomer } from "../utils/api";
 import {
   Container, Row, Col, Button, Input, Card, CardBody, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label,
 } from "reactstrap";
@@ -8,8 +9,11 @@ const VendorPage = () => {
   const [view, setView] = useState("customers");
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debtPaid, setDebtPaid] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [customerDetails, setCustomerDetails] = useState({ name: "", phone: "", email: "" });
+  const [userDetails, setUserDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const handleViewChange = (newView) => {
     setView(newView);
@@ -26,6 +30,27 @@ const VendorPage = () => {
     const { name, value } = e.target;
     setCustomerDetails({ ...customerDetails, [name]: value });
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token"); 
+    window.location.href = "/login"; 
+  };
+
+const handleClickAdd = async () => {
+    const result = await handleAddCustomer(customerDetails, toggleModal);
+    if (result) {
+      console.log("Vendor added successfully:", result);
+    }
+    setCustomerDetails({ name: "", phone: "", email: "" });
+    toggleModal();
+  };
+
+useEffect(() => {
+    const getUserData = async () => {
+      await fetchUserData(setUserDetails, setLoading);
+    };
+    getUserData();
+  }, []);
 
   const handleAddCustomer = async () => {
     if (!customerDetails.name || !customerDetails.phone || !customerDetails.email) {
@@ -69,11 +94,6 @@ const VendorPage = () => {
   };
   
 
-  const handleLogout = () => {
-    localStorage.removeItem("token"); 
-    window.location.href = "/login"; 
-  };
-
   return (
     <div className="d-flex align-items-center justify-content-center vh-100" style={{ backgroundColor: "#f3f4f6" }}>
       <div className="card p-4 shadow-lg" style={{ width: "90%", borderRadius: "20px" }}>
@@ -84,8 +104,16 @@ const VendorPage = () => {
               <h2 className="fw-bold">DUE-MEMO</h2>
               <div className="user-profile mt-4">
                 <p><strong>USER PROFILE</strong></p>
-                <p>Name: Sunadh P</p>
-                <p>Phone: 123-456-7890</p>
+                {/*  loading  */}
+                {loading ? (
+                  <p>Loading...</p>
+                ) : (
+                  <>
+                    <p>Name: {userDetails.username}</p>
+                    <p>Phone: {userDetails.phoneNumber}</p>
+                    <p>Email: {userDetails.email}</p>
+                  </>
+                )}
               </div>
               <Button color="light" className="my-2 w-100" onClick={() => handleViewChange("customers")}>
                 Customers

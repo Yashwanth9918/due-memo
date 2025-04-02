@@ -13,7 +13,7 @@ const authMiddleware = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET); // Verify token
     req.user = decoded; // Attach decoded user info to request
-    next(); // Proceed to next middleware or route handler
+    next(); 
   } catch (error) {
     res.status(403).json({ message: "Invalid token. Access denied." });
   }

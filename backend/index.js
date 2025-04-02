@@ -37,13 +37,13 @@ app.use(cookieParser());
 // Routes
 // console.log("User routes mounted at /api/v1/users"); 
 app.use("/api/v1/users", userRoutes);
-app.use("/api/v1/clients", clientRoutes);
+app.use("/api/v1/clients", clientRoutes);             
 app.use("/api/v1/transactions", transactionRoutes);
 app.post("/api/v1/users/register", async (req, res) => {
   console.log(req.body); // Log the request body
 });
 
-// // Test API Route
+// // Test API Route 
 // app.get("/", (req, res) => {
 //   res.send(" API is working!");
 // });
