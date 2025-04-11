@@ -1,11 +1,11 @@
 import express from "express";
-import { getClients, addClient } from "../controllers/clientController.js";
+import { getClient, addClient } from "../controllers/clientController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // Get all clients
-router.get("/", getClients);
+router.post("/get", getClient);
 
 // Add a new client
 router.post("/add",authMiddleware , addClient);

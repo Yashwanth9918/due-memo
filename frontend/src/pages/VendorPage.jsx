@@ -39,8 +39,12 @@ const VendorPage = () => {
 const handleClickAdd = async () => {
     const result = await handleAddCustomer(customerDetails, toggleModal);
     if (result) {
-      console.log("Vendor added successfully:", result);
+      console.log("Customer added successfully:", result);
     }
+
+    //fetch the user data again so that we get the latest user details
+    await fetchUserData(setUserDetails, setLoading);
+
     setCustomerDetails({ name: "", phone: "", email: "" });
     toggleModal();
   };
@@ -51,49 +55,7 @@ useEffect(() => {
     };
     getUserData();
   }, []);
-
-  const handleAddCustomer = async () => {
-    if (!customerDetails.name || !customerDetails.phone || !customerDetails.email) {
-      alert("Please fill in all fields!");
-      return;
-    }
   
-    try {
-      const token = localStorage.getItem("token"); // Retrieve the auth token
-      if (!token) {
-        alert("User not authenticated. Please log in again.");
-        return;
-      }
-  
-      const response = await fetch("http://localhost:4000/api/v1/clients/add", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Attach the token
-        },
-        body: JSON.stringify({
-          name: customerDetails.name,
-          phoneNumber: customerDetails.phone, 
-          email: customerDetails.email,
-        }),
-      });
-  
-      const data = await response.json();
-      if (response.ok) {
-        alert("New Customer added successfully!");
-        setCustomerDetails({ name: "", phone: "", email: "" });
-        toggleModal();
-        // i should add a feature which refreshes when customer is added so that new customer relfects in page
-      } else {
-        alert(data.message || "Error adding customer.");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Failed to add customer. Try again.");
-    }
-  };
-  
-
   return (
     <div className="d-flex align-items-center justify-content-center vh-100" style={{ backgroundColor: "#f3f4f6" }}>
       <div className="card p-4 shadow-lg" style={{ width: "90%", borderRadius: "20px" }}>
@@ -215,7 +177,7 @@ useEffect(() => {
             </Form>
           </ModalBody>
           <ModalFooter>
-            <Button color="success" onClick={handleAddCustomer}>
+            <Button color="success" onClick={handleClickAdd}>
               Add Customer
             </Button>
             <Button color="secondary" onClick={toggleModal}>

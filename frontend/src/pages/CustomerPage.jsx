@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { fetchUserData, handleAddVendor } from "../utils/api";
+import { fetchUserData, handleAddVendor, fetchClientById } from "../utils/api";
 import {
-  Container, Row, Col, Button, Input, Card, CardBody, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label,
+  Container, Row, Col, Button, Input, Card, CardBody, ListGroup, ListGroupItem, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label,
 } from "reactstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 
@@ -14,6 +14,7 @@ const CustomerPage = () => {
   const [vendorDetails, setVendorDetails] = useState({ name: "", phone: "", email: "" });
   const [userDetails, setUserDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [clientDetails, setClientDetails] = useState([]);
 
   const handleViewChange = (newView) => {
     setView(newView);
@@ -41,6 +42,10 @@ const CustomerPage = () => {
     if (result) {
       console.log("Vendor added successfully:", result);
     }
+
+    //fetch the user data again so that we get the latest user details
+    await fetchUserData(setUserDetails, setLoading);
+
     setVendorDetails({ name: "", phone: "", email: "" });
     toggleModal();
   };
@@ -51,6 +56,31 @@ const CustomerPage = () => {
     };
     getUserData();
   }, []);
+
+  useEffect(() => {
+    // console.log(" userDetails updated:", userDetails);
+    const getAllClientDetails = async () => {
+      if (userDetails?.clients?.length) {
+        const clientPromises = userDetails.clients.map(id => fetchClientById(id));
+        const results = await Promise.all(clientPromises);
+  
+        const validClients = results.filter(client => client !== null);
+        setClientDetails(validClients);
+      }
+    };
+  
+    getAllClientDetails();
+  }, [userDetails]);
+
+  const filteredClients = clientDetails.filter(client =>
+    client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredTransactions = userDetails?.transactions?.filter(transaction =>
+    transaction.amount.toString().includes(searchTerm) ||
+    new Date(transaction.date).toLocaleDateString().includes(searchTerm)
+  ) || [];
 
   return (
     <div className="d-flex align-items-center justify-content-center vh-100" style={{ backgroundColor: "#f3f4f6" }}>
@@ -101,10 +131,31 @@ const CustomerPage = () => {
                 className="mb-3"
               />
 
-              <Card className="mb-3" style={{ borderRadius: "10px" }}>
+              <Card className="mb-3" style={{ borderRadius: "10px", maxHeight: "300px", overflowY: "auto" }}>
                 <CardBody>
                   <h5 className="fw-bold">{view === "vendors" ? "Vendor List" : "Transaction List"}</h5>
-                  <p className="text-muted">Select a {view.slice(0, -1)} or search above.</p>
+                  <ListGroup flush>
+                    {view === "vendors" ? (
+                      filteredClients.map(client => {
+                        console.log("Rendering vendor:", client); 
+                        return (
+                          <ListGroupItem key={client._id}
+                            className="d-flex flex-column"
+                            onClick={() => setSelectedVendor(client)}
+                            style={{ cursor: "pointer" }}>
+                              <strong>{client.name}</strong>
+                              <small className="text-muted">{client.email}</small>
+                          </ListGroupItem>
+                      )})
+                    ) : (
+                      filteredTransactions.map(transaction => (
+                        <ListGroupItem key={transaction._id} className="d-flex flex-column">
+                          <strong>${transaction.amount}</strong>
+                          <small className="text-muted">{new Date(transaction.date).toLocaleDateString()}</small>
+                        </ListGroupItem>
+                      ))
+                    )}
+                  </ListGroup>
                 </CardBody>
               </Card>
 
@@ -112,30 +163,32 @@ const CustomerPage = () => {
             </Col>
 
             {/* Right Section */}
-            <Col md="4" className="right-section p-3">
+            <Col md="4" className="p-3 text-center bg-dark text-white" style={{ borderRadius: "15px" }}>
               {selectedVendor ? (
-                <Card className="shadow-sm" style={{ borderRadius: "10px" }}>
-                  <CardBody>
-                    <h5 className="fw-bold">Selected Vendor</h5>
-                    <p>Name: {selectedVendor.name}</p>
-                    <p>Phone: {selectedVendor.phone}</p>
-                    <label className="d-flex align-items-center mt-3">
-                      <Input
-                        type="checkbox"
-                        checked={debtPaid}
-                        onChange={() => setDebtPaid(!debtPaid)}
-                        className="me-2"
-                      />
+                <>
+                  <h4 className="fw-bold mb-4">Selected Vendor</h4>
+                  <div className="mb-3">
+                    <p><strong>Name:</strong> {selectedVendor.name}</p>
+                    <p><strong>Phone:</strong> {selectedVendor.phoneNumber}</p>
+                    <p><strong>Email:</strong> {selectedVendor.email}</p>
+                  </div>
+                  <div className="form-check d-flex justify-content-center align-items-center gap-2">
+                    <Input
+                      type="checkbox"
+                      checked={debtPaid}
+                      onChange={() => setDebtPaid(!debtPaid)}
+                      className="form-check-input"
+                      id="debtPaidCheckbox"
+                    />
+                    <Label className="form-check-label" htmlFor="debtPaidCheckbox">
                       Debt Paid
-                    </label>
-                  </CardBody>
-                </Card>
+                    </Label>
+                  </div>
+                </>
               ) : (
-                <Card className="shadow-sm d-flex align-items-center justify-content-center" style={{ borderRadius: "10px", height: "100%" }}>
-                  <CardBody>
-                    <h5 className="fw-bold text-center">No Vendor Selected</h5>
-                  </CardBody>
-                </Card>
+                <div className="d-flex align-items-center justify-content-center" style={{ height: "100%" }}>
+                  <h5 className="fw-bold text-white">No Vendor Selected</h5>
+                </div>
               )}
             </Col>
           </Row>

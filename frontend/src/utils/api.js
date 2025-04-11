@@ -123,3 +123,25 @@ export const fetchUserData = async (setUserDetails, setLoading) => {
     setLoading(false);  
   }
 };
+
+export const fetchClientById = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/clients/get`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`, // if you're using auth
+      },
+      body: JSON.stringify({ id }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch client");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("fetchClientById error:", error);
+    return null;
+  }
+};
