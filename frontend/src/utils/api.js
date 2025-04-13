@@ -166,4 +166,47 @@ export const fetchTransactionById = async (id) => {
   }
 };
 
+export const handleNewTransaction = async (
+  NewtransactionDetails,
+  selectedVendor,
+  toggleTransactionModal,
+  setNewTransactionDetails,
+  setUserDetails,
+  setLoading
+) => {
+  if (!NewtransactionDetails.amount || isNaN(NewtransactionDetails.amount)) {
+    alert("Please enter a valid amount.");
+    return;
+  }
+
+  const transactionData = {
+    amount: parseFloat(NewtransactionDetails.amount),
+    type: NewtransactionDetails.type,
+    clientId: selectedVendor._id,
+    userId: selectedVendor.userId,
+  };
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/transactions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(transactionData),
+    });
+
+    if (response.ok) {
+      alert("Transaction added successfully!");
+      await fetchUserData(setUserDetails, setLoading);
+    } else {
+      alert("Failed to add transaction.");
+    }
+  } catch (error) {
+    console.error("Error adding transaction:", error);
+    alert("An error occurred.");
+  }
+
+  setNewTransactionDetails({ amount: "", type: "debit" });
+  toggleTransactionModal();
+};
 

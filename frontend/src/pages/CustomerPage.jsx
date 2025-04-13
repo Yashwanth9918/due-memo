@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { fetchUserData, handleAddVendor, fetchClientById, fetchTransactionById } from "../utils/api";
+import { fetchUserData, handleAddVendor, fetchClientById, fetchTransactionById, handleNewTransaction  } from "../utils/api";
 import {
-  Container, Row, Col, Button, Input, Card, CardBody, ListGroup, ListGroupItem, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label,Badge
+  Container, Row, Col, Button, Input, Card, CardBody, ListGroup, ListGroupItem, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Badge
 } from "reactstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 
@@ -66,7 +66,7 @@ const CustomerPage = () => {
 
   const filteredTransactions = transactionDetails?.filter(transaction => {
     if (!transaction || !transaction.amount || !transaction.date) {
-      return false; // Skip undefined transactions or ones without amount or date
+      return false;
     }
     return (
       transaction.amount.toString().includes(searchTerm) ||
@@ -79,7 +79,7 @@ const CustomerPage = () => {
     // console.log(" userDetails updated:", userDetails);
     const getAllClientDetails = async () => {
       if (userDetails?.clients?.length) {
-        const clientPromises = userDetails.clients.map(id => fetchClientById(id));
+        const clientPromises = [...userDetails.clients].reverse().map(id => fetchClientById(id));
         const results = await Promise.all(clientPromises);
   
         const validClients = results.filter(client => client !== null);
@@ -88,7 +88,7 @@ const CustomerPage = () => {
     };
     const getAllTransactionDetails = async () => {
       if (userDetails?.transactions?.length) {
-        const transactionPromises = userDetails.transactions.map(id => fetchTransactionById(id));
+        const transactionPromises = [...userDetails.transactions].reverse().map(id => fetchTransactionById(id));
         const results = await Promise.all(transactionPromises);
   
         const validTransactions = results.filter(transaction => transaction !== null);
@@ -108,43 +108,14 @@ const CustomerPage = () => {
   };
 
   const handleTransactionSubmit = async () => {
-    console.log("Transaction Submitted:", NewtransactionDetails);
-    if (!NewtransactionDetails.amount || isNaN(NewtransactionDetails.amount)) {
-      alert("Please enter a valid amount.");
-      return;
-    }
-  
-    // Send data to backend
-    const transactionData = {
-      amount: parseFloat(NewtransactionDetails.amount),
-      type: NewtransactionDetails.type,
-      clientId: selectedVendor._id,  
-      userId: selectedVendor.userId,      
-    };
-  
-    try {
-      const response = await fetch('http://localhost:4000/api/v1/transactions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(transactionData),
-      });
-  
-      if (response.ok) {
-        alert('Transaction added successfully!');
-        
-        await fetchUserData(setUserDetails, setLoading);
-
-      } else {
-        alert('Failed to add transaction.');
-      }
-    } catch (error) {
-      console.error('Error adding transaction:', error);
-      alert('An error occurred.');
-    }
-    setNewTransactionDetails({ amount: "", type: "debit" });
-    toggleTransactionModal();
+    await handleNewTransaction(
+      NewtransactionDetails,
+      selectedVendor,
+      toggleTransactionModal,
+      setNewTransactionDetails,
+      setUserDetails,
+      setLoading
+    );
   };
 
   const handleAddTransaction = () => {
@@ -158,15 +129,15 @@ const CustomerPage = () => {
       client => client._id === selectedVendor._id
     );
   
-    if (updatedVendor) {
+    if (
+      updatedVendor &&
+      JSON.stringify(updatedVendor) !== JSON.stringify(selectedVendor)
+    ) {
       setSelectedVendor({ ...updatedVendor });
     }
-  }, [filteredClients]);
-  useEffect(() => {
-    console.log(filteredTransactions)
-  }, [filteredTransactions]);
+  }, [filteredClients]); 
 
-  
+  const totalBalance = clientDetails.reduce((sum, vendor) => sum + vendor.totalDue, 0);
 
   return (
     <div className="d-flex align-items-center justify-content-center vh-100" style={{ backgroundColor: "#f3f4f6" }}>
@@ -205,7 +176,9 @@ const CustomerPage = () => {
             <Col md="5" className="middle-section p-3">
               <Card className="mb-3" style={{ borderRadius: "10px" }}>
                 <CardBody>
-                  <h4 className="fw-bold">Total Debt: $3000</h4>
+                <h4 className="fw-bold">
+                  {totalBalance >= 0 ? `Total Debt: ₹${totalBalance}` : `Total Credit: ₹${Math.abs(totalBalance)}`}
+                </h4>
                 </CardBody>
               </Card>
 
@@ -219,7 +192,7 @@ const CustomerPage = () => {
 
               <Card className="mb-3" style={{ borderRadius: "10px", maxHeight: "300px", overflowY: "auto" }}>
                 <CardBody>
-                  <h5 className="fw-bold">{view === "vendors" ? "Vendor List" : "Transaction List"}</h5>
+                  <h5 className="fw-bold">{view === "" ? "Vendor List" : "Transaction List"}</h5>
                   <ListGroup flush>
                     {view === "vendors" ? (
                       filteredClients.map(client => (
@@ -227,7 +200,7 @@ const CustomerPage = () => {
                           key={client._id}
                           className="d-flex flex-column"
                           onClick={() => { setSelectedVendor(client) }}
-                          style={{ cursor: "pointer" }}
+                          style={{ cursor: "pointer",backgroundColor: selectedVendor?._id === client._id ? "#e9ecef" : "inherit" }}
                         >
                           <strong>{client.name}</strong>
                           <small className="text-muted">{client.email}</small>
@@ -391,7 +364,7 @@ const CustomerPage = () => {
             </Form>
           </ModalBody>
           <ModalFooter>
-            <Button color="success" onClick={handleTransactionSubmit}>
+            <Button color="success" disabled={!NewtransactionDetails.amount || isNaN(NewtransactionDetails.amount)} onClick={handleTransactionSubmit}>
               Submit Transaction
             </Button>
             <Button color="secondary" onClick={toggleTransactionModal}>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { fetchUserData, handleAddCustomer } from "../utils/api";
+import { fetchUserData, handleAddCustomer,fetchClientById, fetchTransactionById, handleNewTransaction } from "../utils/api";
 import {
-  Container, Row, Col, Button, Input, Card, CardBody, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label,
+  Container, Row, Col, Button, Input, Card, CardBody, ListGroup, ListGroupItem, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Badge
 } from "reactstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 
@@ -9,11 +9,14 @@ const VendorPage = () => {
   const [view, setView] = useState("customers");
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [debtPaid, setDebtPaid] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [customerDetails, setCustomerDetails] = useState({ name: "", phone: "", email: "" });
   const [userDetails, setUserDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [clientDetails, setClientDetails] = useState([]);
+  const [transactionModalOpen, setTransactionModalOpen] = useState(false);
+  const [NewtransactionDetails, setNewTransactionDetails] = useState({amount: "",type: "debit",});
+  const [transactionDetails, setTransactionDetails] = useState([]);
 
   const handleViewChange = (newView) => {
     setView(newView);
@@ -55,6 +58,86 @@ useEffect(() => {
     };
     getUserData();
   }, []);
+
+  const filteredClients = clientDetails.filter(client =>
+    client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredTransactions = transactionDetails?.filter(transaction => {
+    if (!transaction || !transaction.amount || !transaction.date) {
+      return false;
+    }
+    return (
+      transaction.amount.toString().includes(searchTerm) ||
+      new Date(transaction.date).toLocaleDateString().includes(searchTerm)
+    );
+  }) || [];
+
+  useEffect(() => {
+    // console.log(" userDetails updated:", userDetails);
+    const getAllClientDetails = async () => {
+      if (userDetails?.clients?.length) {
+        const clientPromises = [...userDetails.clients].reverse().map(id => fetchClientById(id));
+        const results = await Promise.all(clientPromises);
+  
+        const validClients = results.filter(client => client !== null);
+        setClientDetails(validClients);
+      }
+    };
+    const getAllTransactionDetails = async () => {
+      if (userDetails?.transactions?.length) {
+        const transactionPromises = [...userDetails.transactions].reverse().map(id => fetchTransactionById(id));
+        const results = await Promise.all(transactionPromises);
+  
+        const validTransactions = results.filter(transaction => transaction !== null);
+        setTransactionDetails(validTransactions);
+      }
+    };
+
+    getAllTransactionDetails();  
+    getAllClientDetails();
+  }, [userDetails]);
+
+  const toggleTransactionModal = () => setTransactionModalOpen(!transactionModalOpen);
+
+  const handleTransactionInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewTransactionDetails({ ...NewtransactionDetails, [name]: value });
+  };
+
+  const handleTransactionSubmit = async () => {
+      await handleNewTransaction(
+        NewtransactionDetails,
+        selectedCustomer,
+        toggleTransactionModal,
+        setNewTransactionDetails,
+        setUserDetails,
+        setLoading
+      );
+    };
+
+  const handleAddTransaction = () => {
+    toggleTransactionModal();
+  };
+
+  useEffect(() => {
+      if (!selectedCustomer) return;
+    
+      const updatedCustomer = filteredClients.find(
+        client => client._id === selectedCustomer._id
+      );
+    
+      if (
+        updatedCustomer &&
+        JSON.stringify(updatedCustomer) !== JSON.stringify(selectedCustomer)
+      ) {
+        setSelectedCustomer({ ...updatedCustomer });
+      }
+    }, [filteredClients]);
+
+    const totalBalance = clientDetails.reduce((sum, customer) => sum + customer.totalDue, 0);
+
   
   return (
     <div className="d-flex align-items-center justify-content-center vh-100" style={{ backgroundColor: "#f3f4f6" }}>
@@ -93,7 +176,9 @@ useEffect(() => {
             <Col md="5" className="middle-section p-3">
               <Card className="mb-3" style={{ borderRadius: "10px" }}>
                 <CardBody>
-                  <h4 className="fw-bold">Total Due: $5000</h4>
+                <h4 className="fw-bold">
+                  {totalBalance >= 0 ? `Total Debt: ₹${totalBalance}` : `Total Credit: ₹${Math.abs(totalBalance)}`}
+                </h4>
                 </CardBody>
               </Card>
 
@@ -106,9 +191,50 @@ useEffect(() => {
               />
 
               <Card className="mb-3" style={{ borderRadius: "10px" }}>
-                <CardBody>
+              <CardBody>
                   <h5 className="fw-bold">{view === "customers" ? "Customer List" : "Transaction List"}</h5>
-                  <p className="text-muted">Select a {view.slice(0, -1)} or search above.</p>
+                  <ListGroup flush>
+                    {view === "customers" ? (
+                      filteredClients.map(client => (
+                        <ListGroupItem
+                          key={client._id}
+                          className="d-flex flex-column"
+                          onClick={() => { setSelectedCustomer(client) }}
+                          style={{ cursor: "pointer",backgroundColor: selectedCustomer?._id === client._id ? "#e9ecef" : "inherit" }}
+                        >
+                          <strong>{client.name}</strong>
+                          <small className="text-muted">{client.email}</small>
+                        </ListGroupItem>
+                      ))
+                    ) : view === "transactions" ? (
+                      filteredTransactions.map(transaction => (
+                        <ListGroupItem
+                          key={transaction._id}
+                          className="d-flex flex-column"
+                          style={{
+                            backgroundColor: transaction.type === "debit" ? "#f8d7da" : "#d4edda", // Debit: Red, Credit: Green
+                            borderRadius: "10px",
+                            marginBottom: "10px",
+                          }}
+                        >
+                          <div>
+                            <strong>{transaction.type === "debit" ? "-" : "+"} ₹{transaction.amount}</strong>
+                            <br />
+                            <small>{new Date(transaction.date).toLocaleDateString()}</small>
+                          </div>
+                          
+                          <div>
+                            <Badge
+                              color={transaction.type === "debit" ? "danger" : "success"}
+                              className="text-uppercase"
+                            >
+                              {transaction.type}
+                            </Badge>
+                          </div>
+                        </ListGroupItem>
+                      ))
+                    ) : null}
+                  </ListGroup>
                 </CardBody>
               </Card>
 
@@ -116,21 +242,25 @@ useEffect(() => {
             </Col>
 
             {/* Right Section */}
-            <Col md="4" className="right-section p-3">
+            <Col md="4" className="p-3 text-center bg-dark text-white" style={{ borderRadius: "15px" }}>
               {selectedCustomer ? (
-                <Card className="shadow-sm" style={{ borderRadius: "10px" }}>
-                  <CardBody>
-                    <h5 className="fw-bold">Selected Customer</h5>
-                    <p>Name: {selectedCustomer.name}</p>
-                    <p>Phone: {selectedCustomer.phone}</p>
-                  </CardBody>
-                </Card>
+                <>
+                  <h4 className="fw-bold">{selectedCustomer.name}</h4>
+
+                  <div className="mt-3">
+                    <p className="mb-1"><strong>Phone:</strong> {selectedCustomer.phoneNumber}</p>
+                    <p className="mb-3"><strong>Email:</strong> {selectedCustomer.email}</p>
+                    <h6 className="fw-semibold">Total Due: ₹{selectedCustomer.totalDue}</h6>
+                  </div>
+
+                  <div className="d-flex flex-column gap-2 mt-4">
+                    <Button color="success" className="w-100" onClick={handleAddTransaction}>Add Transaction +</Button>
+                  </div>
+                </>
               ) : (
-                <Card className="shadow-sm d-flex align-items-center justify-content-center" style={{ borderRadius: "10px", height: "100%" }}>
-                  <CardBody>
-                    <h5 className="fw-bold text-center">No Customer Selected</h5>
-                  </CardBody>
-                </Card>
+                <div className="d-flex align-items-center justify-content-center" style={{ height: "100%" }}>
+                  <h5 className="fw-bold text-white">No Customer Selected</h5>
+                </div>
               )}
             </Col>
           </Row>
@@ -185,6 +315,63 @@ useEffect(() => {
             </Button>
           </ModalFooter>
         </Modal>
+
+        {/* Add Transaction Modal */}
+                <Modal isOpen={transactionModalOpen} toggle={toggleTransactionModal}>
+                  <ModalHeader toggle={toggleTransactionModal}>Add Transaction</ModalHeader>
+                  <ModalBody>
+                    <Form>
+                      <FormGroup>
+                        <Label for="amount">Amount</Label>
+                        <Input
+                          type="number"
+                          id="amount"
+                          name="amount"
+                          value={NewtransactionDetails.amount}
+                          onChange={handleTransactionInputChange}
+                          placeholder="Enter amount"
+                        />
+                      </FormGroup>
+        
+                      <FormGroup tag="fieldset" className="mt-3">
+                        <Label>Transaction Type</Label>
+                        <FormGroup check>
+                          <Label check>
+                            <Input
+                              type="radio"
+                              name="type"
+                              value="debit"
+                              checked={NewtransactionDetails.type === "debit"}
+                              onChange={handleTransactionInputChange}
+                            />{" "}
+                            Debit
+                          </Label>
+                        </FormGroup>
+                        <FormGroup check>
+                          <Label check>
+                            <Input
+                              type="radio"
+                              name="type"
+                              value="credit"
+                              checked={NewtransactionDetails.type === "credit"}
+                              onChange={handleTransactionInputChange}
+                            />{" "}
+                            Credit
+                          </Label>
+                        </FormGroup>
+                      </FormGroup>
+                    </Form>
+                  </ModalBody>
+                  <ModalFooter>
+                    <Button color="success" disabled={!NewtransactionDetails.amount || isNaN(NewtransactionDetails.amount)} onClick={handleTransactionSubmit}>
+                      Submit Transaction
+                    </Button>
+                    <Button color="secondary" onClick={toggleTransactionModal}>
+                      Cancel
+                    </Button>
+                  </ModalFooter>
+                </Modal>
+
       </div>
     </div>
   );

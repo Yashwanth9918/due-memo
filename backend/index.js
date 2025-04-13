@@ -28,8 +28,8 @@ const connectDB = async () => {
     process.exit(1);
   }
 }; 
-
-// Middleware 
+ 
+// Middleware    
 app.use(express.json());
 app.use(cors(corsOption)); 
 app.use(cookieParser());
@@ -46,7 +46,7 @@ app.use("/api/v1/transactions", transactionRoutes);
 // // Test API Route 
 // app.get("/", (req, res) => {
 //   res.send(" API is working!");
-// });
+// }); 
 
 // Connect to DB and Start the Server 
 connectDB();
