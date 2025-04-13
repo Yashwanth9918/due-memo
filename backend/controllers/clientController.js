@@ -44,22 +44,21 @@ export const addClient = async (req, res) => {
 };
 
 export const getClient = async (req, res) => {
-  const {id} = req.body;
-
-  if (!id) {
-    return res.status(400).json({ message: "Client ID is required" });
-  }
 
   try {
+    const { id } = req.params;
+    
     const client = await Client.findById(id);
 
     if (!client) {
       return res.status(404).json({ message: "Client not found" });
     }
+
     console.log(client);
     res.status(200).json(client);
   } catch (error) {
     console.error("Error fetching client:", error);
     res.status(500).json({ message: "Server error", error: error.message });
-  } 
+  }
 };
+

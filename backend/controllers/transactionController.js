@@ -1,52 +1,66 @@
 import Transaction from "../models/transactions.js";
+import Client from "../models/client.js";
+import User from "../models/user.js"; 
 
-// @desc    Add a new transaction
-// @route   POST /api/v1/transactions
-// @access  Public
+
 export const addTransaction = async (req, res) => {
-  const { clientId, amount, date } = req.body;
+  const { userId, clientId, amount, type } = req.body;
+
+  if (!userId || !clientId || !amount || !type) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
 
   try {
-    const transaction = new Transaction({ clientId, amount, date });
+    
+    const transaction = new Transaction({ userId, clientId, amount, type });
     await transaction.save();
-    res.status(201).json({ msg: "Transaction added successfully" });
-  } catch (err) {
-    res.status(500).json({ msg: "Server error" });
-  }
-};
 
-// @desc    Get transactions by client ID
-// @route   GET /api/v1/transactions/:clientId
-// @access  Public
-export const getTransactions = async (req, res) => {
-  try {
-    const transactions = await Transaction.find({ clientId: req.params.clientId });
-    res.json(transactions);
-  } catch (err) {
-    res.status(500).json({ msg: "Server error" });
-  }
-};
-
-// @desc    Update a transaction
-// @route   PUT /api/v1/transactions/:id
-// @access  Public
-export const updateTransaction = async (req, res) => {
-  const { id } = req.params;
-  const { amount, date, status } = req.body;
-
-  try {
-    const updatedTransaction = await Transaction.findByIdAndUpdate(
-      id,
-      { amount, date, status },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedTransaction) {
-      return res.status(404).json({ msg: "Transaction not found" });
+    const client = await Client.findById(clientId);
+    if (!client) {
+      return res.status(404).json({ message: "Client not found" });
     }
 
-    res.status(200).json({ msg: "Transaction updated successfully", updatedTransaction });
+    if (type === "debit") {
+      client.totalDue += amount;
+    } else if (type === "credit") {
+      client.totalDue -= amount;
+    }
+
+    client.totalDue = Math.max(client.totalDue, 0);
+
+    await client.save();
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.transactions.push(transaction._id); 
+    await user.save();
+
+    res.status(201).json({
+      message: "Transaction added successfully",
+      transaction,
+      updatedClient: client,
+    });
   } catch (err) {
-    res.status(500).json({ msg: "Server error" });
+    console.error("Error in addTransaction:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getTransactionById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const transaction = await Transaction.findById(id);
+
+    if (!transaction) {
+      return res.status(404).json({ message: "Transaction not found" });
+    }
+    // console.log("transaction prob :",transaction);
+    res.status(200).json(transaction);
+  } catch (error) {
+    console.error("Error fetching transaction:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };

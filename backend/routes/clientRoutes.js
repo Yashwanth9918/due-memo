@@ -5,7 +5,7 @@ import authMiddleware from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // Get all clients
-router.post("/get", getClient);
+router.get("/:id", getClient);
 
 // Add a new client
 router.post("/add",authMiddleware , addClient);

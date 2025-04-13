@@ -20,9 +20,10 @@ const transactionSchema = new mongoose.Schema({
       type: Number,
       required: true
     },
-    isPaid: {
-      type: Boolean,
-      default: false
+    type: {
+      type: String,
+      enum: ["debit", "credit"],
+      required: true
     }
   }, { timestamps: true });
   

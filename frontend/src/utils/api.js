@@ -1,4 +1,4 @@
-import { jwtDecode } from "jwt-decode";
+// import { jwtDecode } from "jwt-decode";
 
 
 const API_BASE_URL = "http://localhost:4000/api/v1";
@@ -101,7 +101,7 @@ export const fetchUserData = async (setUserDetails, setLoading) => {
       throw new Error("User not authenticated");
     }
 
-    const decoded = jwtDecode(token);
+    // const decoded = jwtDecode(token);
     
     const response = await fetch(`${API_BASE_URL}/users/profile`, {
       method: "GET",
@@ -126,13 +126,12 @@ export const fetchUserData = async (setUserDetails, setLoading) => {
 
 export const fetchClientById = async (id) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/clients/get`, {
-      method: "POST",
+    const response = await fetch(`${API_BASE_URL}/clients/${id}`, {
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`, // if you're using auth
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
-      body: JSON.stringify({ id }),
     });
 
     if (!response.ok) {
@@ -145,3 +144,26 @@ export const fetchClientById = async (id) => {
     return null;
   }
 };
+
+
+export const fetchTransactionById = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/transactions/${id}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`, // if needed
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch transaction");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("fetchTransactionById error:", error);
+    return null;
+  }
+};
+
+

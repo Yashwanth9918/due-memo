@@ -33,7 +33,7 @@ const connectDB = async () => {
 app.use(express.json());
 app.use(cors(corsOption)); 
 app.use(cookieParser());
-
+ 
 // Routes
 // console.log("User routes mounted at /api/v1/users"); 
 app.use("/api/v1/users", userRoutes);

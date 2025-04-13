@@ -1,16 +1,14 @@
 import express from "express";
-import { getTransactions, addTransaction, updateTransaction } from "../controllers/transactionController.js";
+import { getTransactionById, addTransaction } from "../controllers/transactionController.js";
 
 const router = express.Router();
 
 // Get all transactions
-router.get("/", getTransactions);
+router.get("/:id", getTransactionById);
 
 // Add a new transaction
 router.post("/", addTransaction);
 
-// Update a transaction
-router.put("/:id", updateTransaction);
 
 
 export default router;
